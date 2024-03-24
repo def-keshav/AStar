@@ -3,6 +3,8 @@ from math import dist
 import matplotlib.pyplot as plt
 import time
 import heapq
+import os
+import cv2
 
 class Node:
 
@@ -197,40 +199,91 @@ def Backtracking(goal_node):
     
     return x,y
 
-def plot(start_node,goal_node,x_path,y_path,TotalNodes,obs_space):
+def plot(start_node, goal_node, x_path, y_path, all_nodes, obs_space, frame_count, final_path):
     plt.figure()
+    ### Start node and Goal node ###
     plt.plot(start_node.x, start_node.y, "Dw")
     plt.plot(goal_node.x, goal_node.y, "Dg")
+
+    ### Configuration Space for Obstacles ####
     plt.imshow(obs_space, "GnBu")
     ax = plt.gca()
-    ax.invert_yaxis()
+    ax.invert_yaxis() #y-axis inversion
     
-    for i in range(len(TotalNodes)):
-        plt.plot(TotalNodes[i][0], TotalNodes[i][1], "2g-")
-    plt.plot(x_path,y_path, ':r')
-    plt.show()
-    plt.pause(3)
-    plt.close('all')
+    ### All visited nodes ###
+    for i in range(len(all_nodes)):
+        plt.plot(all_nodes[i][0], all_nodes[i][1], "2g-")
+    
+    # plt.plot(all_nodes[len(all_nodes)-1][0], all_nodes[len(all_nodes)-1][1], "2g-")
+
+    # plt.plot(x_path, y_path, ':r')
+
+    # # Plot final path iteration-wise
+    if final_path:
+        plt.plot(x_path[:frame_count+1], y_path[:frame_count+1], ':r')
+        
+
+    # Plot final path iteration-wise
+    # plt.plot(x_path[:frame_count+1], y_path[:frame_count+1], ':r')
+
+    # Save each frame as an image
+    plt.savefig(f"frame_{frame_count}.png")
+    plt.close()
+
+# Function to create a video from saved frames
+def create_video(frame_prefix, output_video_path, frame_rate):
+    frames = []
+    frame_files = [f for f in os.listdir() if f.startswith(frame_prefix) and f.endswith('.png')]
+    frame_files.sort(key=lambda x: int(x.split('_')[1].split('.')[0]))  # Sort files by frame number
+    for frame_file in frame_files:
+        frames.append(cv2.imread(frame_file))
+        os.remove(frame_file)  # Remove the frame image after adding it to the video
+
+    # Determine the video codec and create the video writer
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    video_writer = cv2.VideoWriter(output_video_path, fourcc, frame_rate, (frames[0].shape[1], frames[0].shape[0]))
+
+    # Write frames to video
+    for frame in frames:
+        video_writer.write(frame)
+
+    # Release the video writer and destroy any remaining OpenCV windows
+    video_writer.release()
+    cv2.destroyAllWindows()
+
+
+######### CALLING ALL MY FUNCTIONS TO IMPLEMENT A STAR ALGORITHM ON A POINT ROBOT ###########
 
 if __name__ == '__main__':
     
-    obs_clearance = 5   
-    robot_radius = 5  
-    robot_StepSize = input("Enter Step size of the Robot: ")
-    robot_StepSize = int(robot_StepSize)
+    #### Clearance of the Obstacle ####
+    obs_clearance = input("Assign Clearance to the Obstacles: ")
+    obs_clearance = int(obs_clearance)
     
-    width = 400
-    height = 250
+    #### Radius of the Robot ####
+    robot_radius = input("Enter the Radius of the Robot: ") 
+    robot_radius = int(robot_radius)
+    
+    #### Step Size of the Robot ####
+    robot_step_size = input("Enter Step size of the Robot: ")
+    robot_step_size = int(robot_step_size)
+    
+    width = 1200
+    height = 500
     obs_space = GraphGeneration(width, height, obs_clearance, robot_radius)
-    cost_to_go = 0
-
+    c2g = 0
+    
+    #### Taking start node coordinates as input from user #####
     start_coordinates = input("Enter coordinates for Start Node: ")
     s_x, s_y = start_coordinates.split()
     s_x = int(s_x)
-    s_y = int(s_y)    
-    s_angle = input("Enter Orientation of the robot at start node: ")
-    s_t = int(s_angle)
+    s_y = int(s_y)
     
+    #### Taking Orientation for the robot ####
+    s_theta = input("Enter Orientation of the robot at start node: ")
+    s_t = int(s_theta)
+    
+    ### Checking if the user input is valid #####
     if not ValidMoveCheck(s_x, s_y, obs_space):
         print("Start node is out of bounds")
         exit(-1)
@@ -238,14 +291,18 @@ if __name__ == '__main__':
     if not validorient(s_t):
         print("Orientation has to be a multiple of 30")
         exit(-1)
-		    
+            
+    ##### Taking Goal node coordinates as input from user ##### 
     goal_coordinates = input("Enter coordinates for Goal Node: ")
     g_x, g_y = goal_coordinates.split()
     g_x = int(g_x)
-    g_y = int(g_y)    
-    g_angle = input("Enter Orientation of the robot at goal node: ")
-    g_t = int(g_angle)
-        
+    g_y = int(g_y)
+    
+    #### Taking Orientation for the robot ####
+    g_theta = input("Enter Orientation of the robot at goal node: ")
+    g_t = int(g_theta)
+    
+    ### Checking if the user input is valid #####
     if not ValidMoveCheck(g_x, g_y, obs_space):
         print("Goal node is out of bounds")
         exit(-1)
@@ -254,23 +311,34 @@ if __name__ == '__main__':
         print("Orientation has to be a multiple of 30")
         exit(-1)
 
-    timer_start = time.time()    
-    start_node = Node(s_x, s_y,s_t, 0.0, -1,cost_to_go)
-    goal_node = Node(g_x, g_y,g_t, 0.0, -1, cost_to_go)
-    TotalNodes,flag = A_Str(start_node, goal_node, obs_space, robot_StepSize)
+    ### Timer to calculate computational  time ###
+    timer_start = time.time()
     
+    ##### Creating start_node and goal_node objects 
+    start_node = Node(s_x, s_y,s_t, 0.0, -1,c2g)
+    goal_node = Node(g_x, g_y,g_t, 0.0, -1, c2g)
+    all_nodes,flag = A_Str(start_node, goal_node, obs_space, robot_step_size)
+    
+    ##### Plot shortest path only when goal node is reached #####
     if (flag)==1:
         x_path,y_path = Backtracking(goal_node)
     else:
         print("No path was found")
-		
-    plot(start_node,goal_node,x_path,y_path,TotalNodes,obs_space)
+        
+    # Calling create_video function after plotting
+    frame_count = 0  # Initialize frame count
+    for i in range(len(all_nodes)):
+        plot(start_node, goal_node, x_path, y_path, all_nodes[:i+1], obs_space, frame_count, final_path=False)
+        frame_count += 1
+
+    for i in range(len(x_path)):
+        plot(start_node, goal_node, x_path, y_path, all_nodes, obs_space, frame_count, final_path=True)
+        frame_count += 1
+
+    # Create video from saved frames
+    create_video("frame", "output_video.mp4", 30)  # Adjust the frame rate as needed
+
+
     timer_stop = time.time()
-    
     C_time = timer_stop - timer_start
-    print("The Total Runtime is:  ", C_time) 
-	
-
-
-
-	
+    print("The Total Runtime is:  ", C_time)
