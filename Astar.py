@@ -56,7 +56,7 @@ def ActionMove60CCW(x,y,angle,StepSize, cost_to_come):  #funtion to move 60 degr
     y = y + (StepSize*np.sin(np.radians(angle)))
     x = round(x)
     y = round(y)
-    cost_to_come = 1 + cost_to_come
+    cost_to_come = StepSize + cost_to_come
     return x,y,angle,cost_to_come
 
 def ActionMove30CCW(x,y,angle, StepSize, cost_to_come): #function to move 30 degrees counter clockwise
@@ -65,7 +65,7 @@ def ActionMove30CCW(x,y,angle, StepSize, cost_to_come): #function to move 30 deg
     y = y + (StepSize*np.sin(np.radians(angle)))
     x = round(x)
     y = round(y)
-    cost_to_come = 1 + cost_to_come
+    cost_to_come = StepSize + cost_to_come
     return x,y,angle, cost_to_come
 
 def ActionMoveforward(x,y,angle, StepSize, cost_to_come): #function to move forward
@@ -74,7 +74,7 @@ def ActionMoveforward(x,y,angle, StepSize, cost_to_come): #function to move forw
     y = y + (StepSize*np.sin(np.radians(angle)))
     x = round(x)
     y = round(y)
-    cost_to_come = 1 + cost_to_come
+    cost_to_come = StepSize + cost_to_come
     return x,y,angle, cost_to_come
 
 def ActionMove30CW(x,y,angle, StepSize, cost_to_come): #function to move 30 degrees clockwise
@@ -83,7 +83,7 @@ def ActionMove30CW(x,y,angle, StepSize, cost_to_come): #function to move 30 degr
     y = y + (StepSize*np.sin(np.radians(angle)))
     x = round(x)
     y = round(y)
-    cost_to_come = 1 + cost_to_come
+    cost_to_come = StepSize + cost_to_come
     return x,y,angle, cost_to_come
 
 def ActionMove60CW(x,y,angle, StepSize, cost_to_come): #function to move 60 degrees clockwise
@@ -92,7 +92,7 @@ def ActionMove60CW(x,y,angle, StepSize, cost_to_come): #function to move 60 degr
     y = y + (StepSize*np.sin(np.radians(angle)))
     x = round(x)
     y = round(y)
-    cost_to_come = 1 + cost_to_come
+    cost_to_come = StepSize + cost_to_come
     return x,y,angle,cost_to_come
 
 #defining the action set with possible moves
@@ -126,7 +126,7 @@ def ValidMoveCheck(x, y, obstacleMapSpace):
 #checking if the goal has been reached
 def GoalCheck(present, goal):   
     ed = dist((present.x, present.y), (goal.x, goal.y))             
-    if ed < 1.5:  #providing threshold
+    if ed < 1.5 and (present.angle == goal.angle):
         return True
     else:
         return False
@@ -248,8 +248,8 @@ def AnimateVideo(frame_prefix, output_video_path, frame_rate):
 
 
 #providing the clearance and radius
-obstacle_clearance = 5
-ptrobot_rad = 5
+obstacle_clearance =  int(input("provide the clearance for the obstacles: "))
+ptrobot_rad = int(input("provide the radius of the point robot: "))
 #providing the step size of the robot
 step_size = input("provide step size for the point robot: ")
 step_size = int(step_size)
