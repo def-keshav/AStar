@@ -246,66 +246,66 @@ def AnimateVideo(frame_prefix, output_video_path, frame_rate):
     cv2.destroyAllWindows()
 
 
-if __name__ == '__main__':
-    #providing the clearance and radius
-    obstacle_clearance = 5
-    ptrobot_rad = 5
-    #providing the step size of the robot
-    step_size = input("provide step size for the point robot: ")
-    step_size = int(step_size)
-    W = 1200
-    H = 500
-    obstacleMapSpace = GraphGeneration(W, H, obstacle_clearance, ptrobot_rad)
-    cost_to_go = 0
-    #initial coordinates and angle at the start 
-    initial_coordinates = input("provide initial x and y coordinates of the point robot:")
-    initial_x, initial_y = initial_coordinates.split()
-    initial_x = int(initial_x)
-    initial_y = int(initial_y)    
-    initial_angle = input("Enter the initial angle/orientation of the point robot: ")
-    angle_initial = int(initial_angle)
-    #checking move validity
-    if not ValidMoveCheck(initial_x, initial_y, obstacleMapSpace):
-        print("start node is not valid, kindly enter a different value")
-        exit(-1)
-    #checking orientation validity    
-    if not validorientationcheck(angle_initial):
-        print("kindly enter an orientation which is a multiple of 30")
-        exit(-1)
-    #providing the coordinates and angle for the goal        
-    final_coordinates = input("Provide the x and y coordinates of the Goal: ")
-    final_x, final_y = final_coordinates.split()
-    final_x = int(final_x)
-    final_y = int(final_y)    
-    final_angle = input("provide the Orientation for the goal: ")
-    angle_final = int(final_angle)
-    #checking validity 
-    if not ValidMoveCheck(final_x, final_y, obstacleMapSpace):
-        print("Goal node can not be reached, kindly enter a different value")
-        exit(-1)
-    #checking validity of the orientation    
-    if not validorientationcheck(angle_final):
-        print("kindly enter an orientation which is a multiple of 30")
-        exit(-1)
 
-    start_time = time.time()
-    node_s = Node(initial_x, initial_y,angle_initial, 0.0, -1,cost_to_go)
-    node_g = Node(final_x, final_y,angle_final, 0.0, -1, cost_to_go)
-    all_nodes,flag = A_Str(node_s, node_g, obstacleMapSpace, step_size)
-    #if goal has been reached, backtracking from initial to goal position
-    if (flag)==1:
-        X_track,Y_track = Backtracking(node_g)
-    else:
-        print("Could not find Path, kindly enter a different goal")
-    f_count = 0  
-    for i in range(len(all_nodes)):
-        plot(node_s, node_g, X_track, Y_track, all_nodes[:i+1], obstacleMapSpace, f_count, final_path=False)
-        f_count += 1
+#providing the clearance and radius
+obstacle_clearance = 5
+ptrobot_rad = 5
+#providing the step size of the robot
+step_size = input("provide step size for the point robot: ")
+step_size = int(step_size)
+W = 1200
+H = 500
+obstacleMapSpace = GraphGeneration(W, H, obstacle_clearance, ptrobot_rad)
+cost_to_go = 0
+#initial coordinates and angle at the start 
+initial_coordinates = input("provide initial x and y coordinates of the point robot:")
+initial_x, initial_y = initial_coordinates.split()
+initial_x = int(initial_x)
+initial_y = int(initial_y)    
+initial_angle = input("Enter the initial angle/orientation of the point robot: ")
+angle_initial = int(initial_angle)
+#checking move validity
+if not ValidMoveCheck(initial_x, initial_y, obstacleMapSpace):
+    print("start node is not valid, kindly enter a different value")
+    exit(-1)
+#checking orientation validity    
+if not validorientationcheck(angle_initial):
+    print("kindly enter an orientation which is a multiple of 30")
+    exit(-1)
+#providing the coordinates and angle for the goal        
+final_coordinates = input("Provide the x and y coordinates of the Goal: ")
+final_x, final_y = final_coordinates.split()
+final_x = int(final_x)
+final_y = int(final_y)    
+final_angle = input("provide the Orientation for the goal: ")
+angle_final = int(final_angle)
+#checking validity 
+if not ValidMoveCheck(final_x, final_y, obstacleMapSpace):
+    print("Goal node can not be reached, kindly enter a different value")
+    exit(-1)
+#checking validity of the orientation    
+if not validorientationcheck(angle_final):
+    print("kindly enter an orientation which is a multiple of 30")
+    exit(-1)
 
-    for i in range(len(X_track)):
-        plot(node_s, node_g, X_track, Y_track, all_nodes, obstacleMapSpace, f_count, final_path=True)
-        f_count += 1
-    AnimateVideo("f", "PathAnimationvideo.mp4", 30) 
-    end_time = time.time()
-    time_taken = end_time - start_time
-    print("Time taken:  ", time_taken)
+start_time = time.time()
+node_s = Node(initial_x, initial_y,angle_initial, 0.0, -1,cost_to_go)
+node_g = Node(final_x, final_y,angle_final, 0.0, -1, cost_to_go)
+all_nodes,flag = A_Str(node_s, node_g, obstacleMapSpace, step_size)
+#if goal has been reached, backtracking from initial to goal position
+if (flag)==1:
+    X_track,Y_track = Backtracking(node_g)
+else:
+    print("Could not find Path, kindly enter a different goal")
+f_count = 0  
+for i in range(len(all_nodes)):
+    plot(node_s, node_g, X_track, Y_track, all_nodes[:i+1], obstacleMapSpace, f_count, final_path=False)
+    f_count += 1
+
+for i in range(len(X_track)):
+    plot(node_s, node_g, X_track, Y_track, all_nodes, obstacleMapSpace, f_count, final_path=True)
+    f_count += 1
+AnimateVideo("f", "PathAnimationvideo.mp4", 30) 
+end_time = time.time()
+time_taken = end_time - start_time
+print("Time taken:  ", time_taken)
