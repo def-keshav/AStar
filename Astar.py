@@ -19,9 +19,36 @@ class Node:
     def __lt__(self,other):
         return self.cost_to_come + self.cost_to_go < other.cost_to_come + other.cost_to_go
     
-def GraphGeneration(width, height, obs_clearance, robot_radius):
+def GraphGeneration(width, height, obstacle_clearance, ptrobot_rad):
 
-    pass
+    obstacleMap = np.full((height,width),0)
+    
+    for y in range(height) :
+        for x in range(width):        
+            if x<obstacle_clearance+ptrobot_rad or x>width-(obstacle_clearance+ptrobot_rad) or y<obstacle_clearance+ptrobot_rad or y>height-(obstacle_clearance+ptrobot_rad):
+                obstacleMap[y,x] = 1 
+
+            if x>900-obstacle_clearance+ptrobot_rad and x<1100+obstacle_clearance+ptrobot_rad and y>50-(obstacle_clearance+ptrobot_rad) and y<125+obstacle_clearance+ptrobot_rad:
+                obstacleMap[y,x] = 1
+            if x>1020-(obstacle_clearance+ptrobot_rad) and x<1100+obstacle_clearance+ptrobot_rad and y>125-(obstacle_clearance+ptrobot_rad) and y<375+obstacle_clearance+ptrobot_rad:
+                obstacleMap[y,x] = 1      
+            if x>900-(obstacle_clearance+ptrobot_rad) and x<1100+obstacle_clearance+ptrobot_rad and y>375-(obstacle_clearance+ptrobot_rad) and y<450+obstacle_clearance+ptrobot_rad:
+                obstacleMap[y,x] = 1  
+
+            if x>100-(obstacle_clearance+ptrobot_rad) and x<175+obstacle_clearance+ptrobot_rad and y>100-(obstacle_clearance+ptrobot_rad):
+                obstacleMap[y,x] = 1
+            if x>275-(obstacle_clearance+ptrobot_rad) and x<350+obstacle_clearance+ptrobot_rad and y<400+obstacle_clearance+ptrobot_rad:
+                obstacleMap[y,x] = 1
+
+            if x<785+(obstacle_clearance+ptrobot_rad) and x>515-(obstacle_clearance+ptrobot_rad):
+                if 1.73*y+x-(1342.25+2*(obstacle_clearance+ptrobot_rad))<0:
+                    if 1.73*y+x-(823-2*(obstacle_clearance+ptrobot_rad))>0:
+                        if 1.73*y-x-(42+2*(obstacle_clearance+ptrobot_rad))<0:
+                            if 1.73*y-x+477.25+2*(obstacle_clearance+ptrobot_rad)>0:
+                                obstacleMap[y,x] = 1              
+    
+    return obstacleMap
+
 
 def ActionMove60CCW(x,y,angle,StepSize, cost_to_come):
     angle = angle + 60
@@ -85,31 +112,31 @@ def ActionSet(move,x,y,angle,StepSize,cost_to_come):
 		return None
 
 
-def ValidMoveCheck(x, y, obs_space):
+def ValidMoveCheck(x, y, obstacleMapSpace):
 
-	e = obs_space.shape
+	s = obstacleMapSpace.shape
 
-	if( x > e[1] or x < 0 or y > e[0] or y < 0 ):
+	if( x > s[1] or x < 0 or y > s[0] or y < 0 ):
 		return False
 	
 	else:
 		try:
-			if(obs_space[y][x] == 1  or obs_space[y][x]==2):
+			if(obstacleMapSpace[y][x] == 1  or obstacleMapSpace[y][x]==2):
 				return False
 		except:
 			pass
 	return True
 
-def Check_goal(present, goal):
+def GoalCheck(present, goal):
     
-    dt = dist((present.x, present.y), (goal.x, goal.y))             
+    ed = dist((present.x, present.y), (goal.x, goal.y))             
 
-    if dt < 1.5:
+    if ed < 1.5:
         return True
     else:
         return False
 
-def validorient(angle):
+def validorientationcheck(angle):
     if((angle%30)==0):
         return angle
     else:
@@ -119,73 +146,72 @@ def key(node):
     key = 1022*node.x + 111*node.y 
     return key
 
-def A_Str(start,goal,obs_space,StepSize):                       
+def A_Str(start,goal,obstacleMapSpace,StepSize):                       
 #checking if the goal and start noad are the same
-    if Check_goal(start, goal):
+    if GoalCheck(start, goal):
         return None,1
-    goal_node = goal        #intializing goal node
-    start_node = start      #initializing start node
+    node_g = goal        #intializing goal node
+    node_s = start      #initializing start node
     #defining moves available
     moves = ['ActionMove60CCW','ActionMove30CCW', 'ActionMoveForward', 'ActionMove30CW', 'ActionMove60CW']   
-    OpenNodes = {}     #all open nodes
+    nodes_open = {}     #all open nodes
     #key generation for each node
-    start_key = key(start_node)
-    OpenNodes[(start_key)] = start_node
-    Closed = {}       #all closed noded
-    priority_list = [] 
-    heapq.heappush(priority_list, [start_node.cost_to_come, start_node])
-    
-    TotalNodes = [] #for visualisation
+    key_s = key(node_s)
+    nodes_open[(key_s)] = node_s
+    nodes_closed = {}       #all nodes_closed noded
+    P_queue = [] 
+    heapq.heappush(P_queue, [node_s.cost_to_come, node_s])
+    nodes_total = [] #for visualisation
     
 
-    while (len(priority_list) != 0):
+    while (len(P_queue) != 0):
 
-        present_node = (heapq.heappop(priority_list))[1] #popping the node with lowest cost
-        TotalNodes.append([present_node.x, present_node.y, present_node.angle])          
-        present_id = key(present_node)
-        if Check_goal(present_node, goal_node):         #checking if goal node has been found
-            goal_node.ParentNode = present_node.ParentNode
-            goal_node.cost_to_come = present_node.cost_to_come
+        node_current = (heapq.heappop(P_queue))[1] #popping the node with lowest cost
+        nodes_total.append([node_current.x, node_current.y, node_current.angle])          
+        id_current = key(node_current)
+        if GoalCheck(node_current, node_g):         #checking if goal node has been found
+            node_g.ParentNode = node_current.ParentNode
+            node_g.cost_to_come = node_current.cost_to_come
             print("Goal Node found")
-            return TotalNodes,1
+            return nodes_total,1
         #checking if present node is a new node
-        if present_id in Closed:  
+        if id_current in nodes_closed:  
             continue
         else:
-            Closed[present_id] = present_node
-        del OpenNodes[present_id]
+            nodes_closed[id_current] = node_current
+        del nodes_open[id_current]
         #finding all the possible moves
         for move in moves:  
-            x,y,angle,cost_to_come = ActionSet(move,present_node.x,present_node.y,present_node.angle, StepSize, present_node.cost_to_come) 
+            x,y,angle,cost_to_come = ActionSet(move,node_current.x,node_current.y,node_current.angle, StepSize, node_current.cost_to_come) 
             cost_to_go = dist((x, y), (goal.x, goal.y))  
             #creating a new node 
-            new_node = Node(x,y,angle, cost_to_come,present_node, cost_to_go)   
+            new_node = Node(x,y,angle, cost_to_come,node_current, cost_to_go)   
             #Generating a key for the new node
             new_node_id = key(new_node) 
             # checking move validity
-            if not ValidMoveCheck(new_node.x, new_node.y, obs_space):
+            if not ValidMoveCheck(new_node.x, new_node.y, obstacleMapSpace):
                 continue
-            elif new_node_id in Closed:
+            elif new_node_id in nodes_closed:
                 continue
    
-            if new_node_id in OpenNodes:
-                if new_node.cost_to_come < OpenNodes[new_node_id].cost_to_come: 
-                    OpenNodes[new_node_id].cost_to_come = new_node.cost_to_come
-                    OpenNodes[new_node_id].ParentNode = new_node.ParentNode
+            if new_node_id in nodes_open:
+                if new_node.cost_to_come < nodes_open[new_node_id].cost_to_come: 
+                    nodes_open[new_node_id].cost_to_come = new_node.cost_to_come
+                    nodes_open[new_node_id].ParentNode = new_node.ParentNode
             else:
-                OpenNodes[new_node_id] = new_node
+                nodes_open[new_node_id] = new_node
    			
-            heapq.heappush(priority_list, [(new_node.cost_to_come + new_node.cost_to_go), new_node]) 
+            heapq.heappush(P_queue, [(new_node.cost_to_come + new_node.cost_to_go), new_node]) 
    
-    return  TotalNodes,0
+    return  nodes_total,0
 
-def Backtracking(goal_node):  
+def Backtracking(node_g):  
     x_path = []
     y_path = []
-    x_path.append(goal_node.x)
-    y_path.append(goal_node.y)
+    x_path.append(node_g.x)
+    y_path.append(node_g.y)
 
-    parent_node = goal_node.ParentNode
+    parent_node = node_g.ParentNode
     while parent_node != -1:
         x_path.append(parent_node.x)
         y_path.append(parent_node.y)
@@ -199,144 +225,114 @@ def Backtracking(goal_node):
     
     return x,y
 
-def plot(start_node, goal_node, x_path, y_path, all_nodes, obs_space, frame_count, final_path):
+def plot(node_s, node_g, x_path, y_path, all_nodes, obstacleMapSpace, frame_count, final_path):
     plt.figure()
-    ### Start node and Goal node ###
-    plt.plot(start_node.x, start_node.y, "Dw")
-    plt.plot(goal_node.x, goal_node.y, "Dg")
 
-    ### Configuration Space for Obstacles ####
-    plt.imshow(obs_space, "GnBu")
+    plt.plot(node_s.x, node_s.y, "Dw")
+    plt.plot(node_g.x, node_g.y, "Dg")
+
+    plt.imshow(obstacleMapSpace, "GnBu")
     ax = plt.gca()
-    ax.invert_yaxis() #y-axis inversion
+    ax.invert_yaxis() 
     
-    ### All visited nodes ###
     for i in range(len(all_nodes)):
         plt.plot(all_nodes[i][0], all_nodes[i][1], "2g-")
-    
-    # plt.plot(all_nodes[len(all_nodes)-1][0], all_nodes[len(all_nodes)-1][1], "2g-")
 
-    # plt.plot(x_path, y_path, ':r')
-
-    # # Plot final path iteration-wise
     if final_path:
         plt.plot(x_path[:frame_count+1], y_path[:frame_count+1], ':r')
         
-
-    # Plot final path iteration-wise
-    # plt.plot(x_path[:frame_count+1], y_path[:frame_count+1], ':r')
-
-    # Save each frame as an image
     plt.savefig(f"frame_{frame_count}.png")
     plt.close()
 
-# Function to create a video from saved frames
 def create_video(frame_prefix, output_video_path, frame_rate):
     frames = []
     frame_files = [f for f in os.listdir() if f.startswith(frame_prefix) and f.endswith('.png')]
-    frame_files.sort(key=lambda x: int(x.split('_')[1].split('.')[0]))  # Sort files by frame number
+    frame_files.sort(key=lambda x: int(x.split('_')[1].split('.')[0]))
     for frame_file in frame_files:
         frames.append(cv2.imread(frame_file))
-        os.remove(frame_file)  # Remove the frame image after adding it to the video
+        os.remove(frame_file)
 
-    # Determine the video codec and create the video writer
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     video_writer = cv2.VideoWriter(output_video_path, fourcc, frame_rate, (frames[0].shape[1], frames[0].shape[0]))
 
-    # Write frames to video
     for frame in frames:
         video_writer.write(frame)
 
-    # Release the video writer and destroy any remaining OpenCV windows
     video_writer.release()
     cv2.destroyAllWindows()
 
 
-######### CALLING ALL MY FUNCTIONS TO IMPLEMENT A STAR ALGORITHM ON A POINT ROBOT ###########
-
 if __name__ == '__main__':
     
-    #### Clearance of the Obstacle ####
-    obs_clearance = input("Assign Clearance to the Obstacles: ")
-    obs_clearance = int(obs_clearance)
+
+    obstacle_clearance = input("Assign Clearance to the Obstacles: ")
+    obstacle_clearance = int(obstacle_clearance)
     
-    #### Radius of the Robot ####
-    robot_radius = input("Enter the Radius of the Robot: ") 
-    robot_radius = int(robot_radius)
+    ptrobot_rad = input("Enter the Radius of the Robot: ") 
+    ptrobot_rad = int(ptrobot_rad)
     
-    #### Step Size of the Robot ####
     robot_step_size = input("Enter Step size of the Robot: ")
     robot_step_size = int(robot_step_size)
     
     width = 1200
     height = 500
-    obs_space = GraphGeneration(width, height, obs_clearance, robot_radius)
+    obstacleMapSpace = GraphGeneration(width, height, obstacle_clearance, ptrobot_rad)
     c2g = 0
     
-    #### Taking start node coordinates as input from user #####
     start_coordinates = input("Enter coordinates for Start Node: ")
     s_x, s_y = start_coordinates.split()
     s_x = int(s_x)
     s_y = int(s_y)
     
-    #### Taking Orientation for the robot ####
     s_theta = input("Enter Orientation of the robot at start node: ")
     s_t = int(s_theta)
     
-    ### Checking if the user input is valid #####
-    if not ValidMoveCheck(s_x, s_y, obs_space):
+    if not ValidMoveCheck(s_x, s_y, obstacleMapSpace):
         print("Start node is out of bounds")
         exit(-1)
         
-    if not validorient(s_t):
+    if not validorientationcheck(s_t):
         print("Orientation has to be a multiple of 30")
         exit(-1)
             
-    ##### Taking Goal node coordinates as input from user ##### 
     goal_coordinates = input("Enter coordinates for Goal Node: ")
     g_x, g_y = goal_coordinates.split()
     g_x = int(g_x)
     g_y = int(g_y)
     
-    #### Taking Orientation for the robot ####
     g_theta = input("Enter Orientation of the robot at goal node: ")
     g_t = int(g_theta)
     
-    ### Checking if the user input is valid #####
-    if not ValidMoveCheck(g_x, g_y, obs_space):
+    if not ValidMoveCheck(g_x, g_y, obstacleMapSpace):
         print("Goal node is out of bounds")
         exit(-1)
         
-    if not validorient(g_t):
+    if not validorientationcheck(g_t):
         print("Orientation has to be a multiple of 30")
         exit(-1)
 
-    ### Timer to calculate computational  time ###
     timer_start = time.time()
+    node_s = Node(s_x, s_y,s_t, 0.0, -1,c2g)
+    node_g = Node(g_x, g_y,g_t, 0.0, -1, c2g)
+    all_nodes,flag = A_Str(node_s, node_g, obstacleMapSpace, robot_step_size)
     
-    ##### Creating start_node and goal_node objects 
-    start_node = Node(s_x, s_y,s_t, 0.0, -1,c2g)
-    goal_node = Node(g_x, g_y,g_t, 0.0, -1, c2g)
-    all_nodes,flag = A_Str(start_node, goal_node, obs_space, robot_step_size)
-    
-    ##### Plot shortest path only when goal node is reached #####
+
     if (flag)==1:
-        x_path,y_path = Backtracking(goal_node)
+        x_path,y_path = Backtracking(node_g)
     else:
         print("No path was found")
         
-    # Calling create_video function after plotting
-    frame_count = 0  # Initialize frame count
+ 
+    frame_count = 0  
     for i in range(len(all_nodes)):
-        plot(start_node, goal_node, x_path, y_path, all_nodes[:i+1], obs_space, frame_count, final_path=False)
+        plot(node_s, node_g, x_path, y_path, all_nodes[:i+1], obstacleMapSpace, frame_count, final_path=False)
         frame_count += 1
 
     for i in range(len(x_path)):
-        plot(start_node, goal_node, x_path, y_path, all_nodes, obs_space, frame_count, final_path=True)
+        plot(node_s, node_g, x_path, y_path, all_nodes, obstacleMapSpace, frame_count, final_path=True)
         frame_count += 1
 
-    # Create video from saved frames
-    create_video("frame", "output_video.mp4", 30)  # Adjust the frame rate as needed
+    create_video("frame", "output_video.mp4", 30) 
 
 
     timer_stop = time.time()
