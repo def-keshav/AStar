@@ -19,13 +19,13 @@ class Node:
     def __lt__(self,other):
         return self.cost_to_come + self.cost_to_go < other.cost_to_come + other.cost_to_go
     
-def GraphGeneration(width, height, obstacle_clearance, ptrobot_rad):
+def GraphGeneration(W, H, obstacle_clearance, ptrobot_rad):
 
-    obstacleMap = np.full((height,width),0)
+    obstacleMap = np.full((H,W),0)
     
-    for y in range(height) :
-        for x in range(width):        
-            if x<obstacle_clearance+ptrobot_rad or x>width-(obstacle_clearance+ptrobot_rad) or y<obstacle_clearance+ptrobot_rad or y>height-(obstacle_clearance+ptrobot_rad):
+    for y in range(H) :
+        for x in range(W):        
+            if x<obstacle_clearance+ptrobot_rad or x>W-(obstacle_clearance+ptrobot_rad) or y<obstacle_clearance+ptrobot_rad or y>H-(obstacle_clearance+ptrobot_rad):
                 obstacleMap[y,x] = 1 
 
             if x>900-obstacle_clearance+ptrobot_rad and x<1100+obstacle_clearance+ptrobot_rad and y>50-(obstacle_clearance+ptrobot_rad) and y<125+obstacle_clearance+ptrobot_rad:
@@ -161,19 +161,19 @@ def A_Str(start,goal,obstacleMapSpace,StepSize):
     nodes_closed = {}       #all nodes_closed noded
     P_queue = [] 
     heapq.heappush(P_queue, [node_s.cost_to_come, node_s])
-    nodes_total = [] #for visualisation
+    nodeangle_initialotal = [] #for visualisation
     
 
     while (len(P_queue) != 0):
 
         node_current = (heapq.heappop(P_queue))[1] #popping the node with lowest cost
-        nodes_total.append([node_current.x, node_current.y, node_current.angle])          
+        nodeangle_initialotal.append([node_current.x, node_current.y, node_current.angle])          
         id_current = key(node_current)
         if GoalCheck(node_current, node_g):         #checking if goal node has been found
             node_g.ParentNode = node_current.ParentNode
             node_g.cost_to_come = node_current.cost_to_come
-            print("Goal Node found")
-            return nodes_total,1
+            print("Goal Reached!")
+            return nodeangle_initialotal,1
         #checking if present node is a new node
         if id_current in nodes_closed:  
             continue
@@ -181,8 +181,8 @@ def A_Str(start,goal,obstacleMapSpace,StepSize):
             nodes_closed[id_current] = node_current
         del nodes_open[id_current]
         #finding all the possible moves
-        for move in moves:  
-            x,y,angle,cost_to_come = ActionSet(move,node_current.x,node_current.y,node_current.angle, StepSize, node_current.cost_to_come) 
+        for i in moves:  
+            x,y,angle,cost_to_come = ActionSet(i,node_current.x,node_current.y,node_current.angle, StepSize, node_current.cost_to_come) 
             cost_to_go = dist((x, y), (goal.x, goal.y))  
             #creating a new node 
             new_node = Node(x,y,angle, cost_to_come,node_current, cost_to_go)   
@@ -203,29 +203,29 @@ def A_Str(start,goal,obstacleMapSpace,StepSize):
    			
             heapq.heappush(P_queue, [(new_node.cost_to_come + new_node.cost_to_go), new_node]) 
    
-    return  nodes_total,0
+    return  nodeangle_initialotal,0
 
 def Backtracking(node_g):  
-    x_path = []
-    y_path = []
-    x_path.append(node_g.x)
-    y_path.append(node_g.y)
+    X_track = []
+    Y_track = []
+    X_track.append(node_g.x)
+    Y_track.append(node_g.y)
 
-    parent_node = node_g.ParentNode
-    while parent_node != -1:
-        x_path.append(parent_node.x)
-        y_path.append(parent_node.y)
-        parent_node = parent_node.ParentNode
+    node_parent = node_g.ParentNode
+    while node_parent != -1:
+        X_track.append(node_parent.x)
+        Y_track.append(node_parent.y)
+        node_parent = node_parent.ParentNode
         
-    x_path.reverse()
-    y_path.reverse()
+    X_track.reverse()
+    Y_track.reverse()
     
-    x = np.asarray(x_path)
-    y = np.asanyarray(y_path)
+    x = np.asarray(X_track)
+    y = np.asanyarray(Y_track)
     
     return x,y
 
-def plot(node_s, node_g, x_path, y_path, all_nodes, obstacleMapSpace, frame_count, final_path):
+def plot(node_s, node_g, X_track, Y_track, all_nodes, obstacleMapSpace, f_count, final_path):
     plt.figure()
 
     plt.plot(node_s.x, node_s.y, "Dw")
@@ -239,102 +239,102 @@ def plot(node_s, node_g, x_path, y_path, all_nodes, obstacleMapSpace, frame_coun
         plt.plot(all_nodes[i][0], all_nodes[i][1], "2g-")
 
     if final_path:
-        plt.plot(x_path[:frame_count+1], y_path[:frame_count+1], ':r')
+        plt.plot(X_track[:f_count+1], Y_track[:f_count+1], ':r')
         
-    plt.savefig(f"frame_{frame_count}.png")
+    plt.savefig(f"f_{f_count}.png")
     plt.close()
 
-def create_video(frame_prefix, output_video_path, frame_rate):
-    frames = []
-    frame_files = [f for f in os.listdir() if f.startswith(frame_prefix) and f.endswith('.png')]
-    frame_files.sort(key=lambda x: int(x.split('_')[1].split('.')[0]))
-    for frame_file in frame_files:
-        frames.append(cv2.imread(frame_file))
-        os.remove(frame_file)
-
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    video_writer = cv2.VideoWriter(output_video_path, fourcc, frame_rate, (frames[0].shape[1], frames[0].shape[0]))
-
+def AnimateVideo(frame_prefix, output_video_path, frame_rate):
+    f_list = []
+    frames = [f for f in os.listdir() if f.startswith(frame_prefix) and f.endswith('.png')]
+    frames.sort(key=lambda x: int(x.split('_')[1].split('.')[0]))
     for frame in frames:
-        video_writer.write(frame)
+        f_list.append(cv2.imread(frame))
+        os.remove(frame)
 
-    video_writer.release()
+    vid = cv2.VideoWriter_fourcc(*'mp4v')
+    video = cv2.VideoWriter(output_video_path, vid, frame_rate, (f_list[0].shape[1], f_list[0].shape[0]))
+
+    for frame in f_list:
+        video.write(frame)
+
+    video.release()
     cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
     
 
-    obstacle_clearance = input("Assign Clearance to the Obstacles: ")
+    obstacle_clearance = input("Provide clearance for the obstacle: ")
     obstacle_clearance = int(obstacle_clearance)
     
-    ptrobot_rad = input("Enter the Radius of the Robot: ") 
+    ptrobot_rad = input("provide radius of the point robot: ") 
     ptrobot_rad = int(ptrobot_rad)
     
-    robot_step_size = input("Enter Step size of the Robot: ")
-    robot_step_size = int(robot_step_size)
+    step_size = input("provide step size for the point robot: ")
+    step_size = int(step_size)
     
-    width = 1200
-    height = 500
-    obstacleMapSpace = GraphGeneration(width, height, obstacle_clearance, ptrobot_rad)
-    c2g = 0
+    W = 1200
+    H = 500
+    obstacleMapSpace = GraphGeneration(W, H, obstacle_clearance, ptrobot_rad)
+    cost_to_go = 0
     
-    start_coordinates = input("Enter coordinates for Start Node: ")
-    s_x, s_y = start_coordinates.split()
-    s_x = int(s_x)
-    s_y = int(s_y)
+    initial_coordinates = input("provide initial x and y coordinates of the point robot:")
+    initial_x, initial_y = initial_coordinates.split()
+    initial_x = int(initial_x)
+    initial_y = int(initial_y)
     
-    s_theta = input("Enter Orientation of the robot at start node: ")
-    s_t = int(s_theta)
+    initial_angle = input("Enter the initial angle/orientation of the point robot: ")
+    angle_initial = int(initial_angle)
     
-    if not ValidMoveCheck(s_x, s_y, obstacleMapSpace):
-        print("Start node is out of bounds")
+    if not ValidMoveCheck(initial_x, initial_y, obstacleMapSpace):
+        print("start node is not valid, kindly enter a different value")
         exit(-1)
         
-    if not validorientationcheck(s_t):
-        print("Orientation has to be a multiple of 30")
+    if not validorientationcheck(angle_initial):
+        print("kindly enter an orientation which is a multiple of 30")
         exit(-1)
             
-    goal_coordinates = input("Enter coordinates for Goal Node: ")
-    g_x, g_y = goal_coordinates.split()
-    g_x = int(g_x)
-    g_y = int(g_y)
+    final_coordinates = input("Provide the x and y coordinates of the Goal: ")
+    final_x, final_y = final_coordinates.split()
+    final_x = int(final_x)
+    final_y = int(final_y)
     
-    g_theta = input("Enter Orientation of the robot at goal node: ")
-    g_t = int(g_theta)
+    final_angle = input("provide the Orientation for the goal: ")
+    angle_final = int(final_angle)
     
-    if not ValidMoveCheck(g_x, g_y, obstacleMapSpace):
-        print("Goal node is out of bounds")
+    if not ValidMoveCheck(final_x, final_y, obstacleMapSpace):
+        print("Goal node can not be reached, kindly enter a different value")
         exit(-1)
         
-    if not validorientationcheck(g_t):
-        print("Orientation has to be a multiple of 30")
+    if not validorientationcheck(angle_final):
+        print("kindly enter an orientation which is a multiple of 30")
         exit(-1)
 
-    timer_start = time.time()
-    node_s = Node(s_x, s_y,s_t, 0.0, -1,c2g)
-    node_g = Node(g_x, g_y,g_t, 0.0, -1, c2g)
-    all_nodes,flag = A_Str(node_s, node_g, obstacleMapSpace, robot_step_size)
+    start_time = time.time()
+    node_s = Node(initial_x, initial_y,angle_initial, 0.0, -1,cost_to_go)
+    node_g = Node(final_x, final_y,angle_final, 0.0, -1, cost_to_go)
+    all_nodes,flag = A_Str(node_s, node_g, obstacleMapSpace, step_size)
     
 
     if (flag)==1:
-        x_path,y_path = Backtracking(node_g)
+        X_track,Y_track = Backtracking(node_g)
     else:
-        print("No path was found")
+        print("Could not find Path, kindly enter a different goal")
         
  
-    frame_count = 0  
+    f_count = 0  
     for i in range(len(all_nodes)):
-        plot(node_s, node_g, x_path, y_path, all_nodes[:i+1], obstacleMapSpace, frame_count, final_path=False)
-        frame_count += 1
+        plot(node_s, node_g, X_track, Y_track, all_nodes[:i+1], obstacleMapSpace, f_count, final_path=False)
+        f_count += 1
 
-    for i in range(len(x_path)):
-        plot(node_s, node_g, x_path, y_path, all_nodes, obstacleMapSpace, frame_count, final_path=True)
-        frame_count += 1
+    for i in range(len(X_track)):
+        plot(node_s, node_g, X_track, Y_track, all_nodes, obstacleMapSpace, f_count, final_path=True)
+        f_count += 1
 
-    create_video("frame", "output_video.mp4", 30) 
+    AnimateVideo("f", "PathAnimationvideo.mp4", 30) 
 
 
-    timer_stop = time.time()
-    C_time = timer_stop - timer_start
-    print("The Total Runtime is:  ", C_time)
+    end_time = time.time()
+    time_taken = end_time - start_time
+    print("Time taken:  ", time_taken)
