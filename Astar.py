@@ -217,7 +217,7 @@ def Backtracking(node_g):
     return x,y
 #plotting the path
 def plot(node_s, node_g, X_track, Y_track, all_nodes, obstacleMapSpace, f_count, final_path):
-    plt.figure()
+    plt.figure(figsize=(10,5))
     plt.plot(node_s.x, node_s.y, "Dw")
     plt.plot(node_g.x, node_g.y, "Dg")
     plt.imshow(obstacleMapSpace, "GnBu")  #plotting the obstacle space
