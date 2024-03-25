@@ -4,3 +4,13 @@ Make sure to enter the x and y coordinates with a space in between them.
 The code gives an output of the video of the A* implementation.
 
 Github Repository link: https://github.com/def-keshav/AStar
+
+inputs given for the video output:
+clearance: 5
+radius: 5
+step size: 1
+initial coordinates: 10 10
+initial orientation: 30
+goal coordinates: 50 10
+goal orientation: 30
+
